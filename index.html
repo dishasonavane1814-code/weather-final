@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AtmoSense ⚡</title>
+<link rel="stylesheet" href="style.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body id="app">
+<canvas id="bgCanvas"></canvas>
+<div class="grain"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- PAGE 1: WELCOME -->
+<section class="page active" id="pg-welcome">
+  <div class="welcome-center">
+    <div class="orb-cluster">
+      <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
+      <div class="icon-ring">
+        <span class="ri ri-1">⛅</span><span class="ri ri-2">🌧️</span><span class="ri ri-3">⚡</span>
+        <span class="ri ri-4">❄️</span><span class="ri ri-5">🌊</span><span class="ri ri-6">☀️</span>
+      </div>
+      <div class="center-globe">🌍</div>
+    </div>
+    <p class="pre-label">introducing</p>
+    <h1 class="brand-giant">Atmo<span class="neon-txt">Sense</span></h1>
+    <p class="sub-copy">weather that actually <em>gets you</em> ✨</p>
+    <button class="cta-btn" onclick="goPage('pg-setup')">
+      get started <i class="fas fa-arrow-right"></i>
+    </button>
+    <p class="fine-print">* · no ads ·  🤙</p>
+  </div>
+</section>
+
+<!-- PAGE 2: SETUP -->
+<section class="page hidden" id="pg-setup">
+  <div class="setup-wrap">
+    <button class="back-btn" onclick="goPage('pg-welcome')"><i class="fas fa-arrow-left"></i></button>
+    <div class="setup-head">
+      <h2 class="setup-title">quick setup <span class="neon-txt">✦</span></h2>
+      <p class="setup-sub">2 steps and we're set 🚀</p>
+    </div>
+    <div class="s-card">
+      <div class="step-badge">01</div>
+      <h3 class="step-title">📍 where you at?</h3>
+      <div class="loc-btns">
+        <button class="loc-btn active" id="btnAuto" onclick="setLocMode('auto')">
+          <div class="lb-icon-box"><i class="fas fa-crosshairs"></i></div>
+          <div class="lb-text"><b>auto detect</b><small>uses your GPS</small></div>
+          <span class="lb-tick" id="tickAuto">✓</span>
+        </button>
+        <button class="loc-btn" id="btnManual" onclick="setLocMode('manual')">
+          <div class="lb-icon-box"><i class="fas fa-keyboard"></i></div>
+          <div class="lb-text"><b>type city</b><small>manual entry</small></div>
+          <span class="lb-tick hidden" id="tickManual">✓</span>
+        </button>
+      </div>
+      <div class="mode-pill" id="modePill">
+        <span class="mp-dot green"></span>
+        <span id="mpText">GPS auto-detect selected ✅</span>
+      </div>
+      <div class="city-wrap hidden" id="cityWrap">
+        <div class="city-row"><i class="fas fa-search"></i>
+          <input type="text" id="cityInput" class="s-input" placeholder="Mumbai, Tokyo, New York…" autocomplete="off" oninput="cityHint(this.value)"/>
+        </div>
+        <div class="suggestions-box" id="citySugg"></div>
+      </div>
+    </div>
+    <div class="s-card">
+      <div class="step-badge">02</div>
+      <h3 class="step-title">🌡️ temp preference?</h3>
+      <div class="temp-opts">
+        <button class="t-opt active" id="celBtn" onclick="setTUnit('metric')">
+          <span class="t-big">°C</span><span class="t-sm">Celsius</span>
+          <div class="t-check" id="celCheck">✓</div>
+        </button>
+        <button class="t-opt" id="fahBtn" onclick="setTUnit('imperial')">
+          <span class="t-big">°F</span><span class="t-sm">Fahrenheit</span>
+          <div class="t-check hidden" id="fahCheck">✓</div>
+        </button>
+      </div>
+    </div>
+    <button class="cta-btn go-btn" id="goBtn" onclick="startWeather()">
+      show me the weather ⚡
+    </button>
+  </div>
+</section>
+
+<!-- PAGE 3: DASHBOARD -->
+<section class="page hidden" id="pg-dash">
+  <div class="alert-bar hidden" id="alertBar">
+    <span class="alert-shake">⚠️</span><span id="alertMsg">Alert</span>
+    <button onclick="this.parentElement.classList.add('hidden')"><i class="fas fa-times"></i></button>
+  </div>
+  <header class="dash-top">
+    <button class="back-btn" onclick="goPage('pg-setup')"><i class="fas fa-arrow-left"></i></button>
+    <div class="dash-logo">Atmo<span class="neon-txt">Sense</span></div>
+    <div class="dash-right">
+      <div><div class="dig-clock" id="clock">00:00:00</div><div class="dig-date" id="clockDate">--</div></div>
+      <button class="insights-btn" onclick="goPage('pg-insights')"><i class="fas fa-chart-line"></i> insights</button>
+      <button class="insights-btn nav-dash-btn" onclick="goPage('pg-nav')"><i class="fas fa-map-marked-alt"></i> navigate</button>
+    </div>
+  </header>
+  <main class="dash-grid">
+    <div class="dc hero-card">
+      <div class="hero-l">
+        <div class="loc-row"><i class="fas fa-map-marker-alt"></i><span id="dLoc">--</span><span class="live-dot"></span></div>
+        <div class="big-temp"><span id="dTemp">--</span><sup id="dUnitLabel">°C</sup></div>
+        <div class="d-cond" id="dCond">--</div>
+        <div class="hero-meta"><span>feels <b id="dFeels">--</b></span><span class="dot">·</span><span id="dHL">H:-- L:--</span></div>
+        <div class="ai-box"><span class="ai-badge">✨ AI says</span><p id="dAiText">fetching vibes…</p></div>
+      </div>
+      <div class="hero-r">
+        <div class="w-emoji-big" id="dEmoji">🌤️</div>
+        <div class="sun-pill">
+          <div class="sun-item"><span>🌅</span><div><small>sunrise</small><b id="dSunrise">--</b></div></div>
+          <div class="sun-sep"></div>
+          <div class="sun-item"><span>🌇</span><div><small>sunset</small><b id="dSunset">--</b></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dc hydro-card">
+      <div class="card-lbl">💧 hydration tracker</div>
+      <div class="hydro-inner">
+        <div class="weight-input-row">
+          <span class="wi-label">your weight</span>
+          <div class="wi-controls">
+            <input type="number" id="weightInput" class="wi-input" placeholder="65" min="30" max="200" value="65"/>
+            <div class="wi-unit-toggle">
+              <button class="wu-btn active" id="wiKg" onclick="setHydroUnit('kg')">kg</button>
+              <button class="wu-btn" id="wiLb" onclick="setHydroUnit('lb')">lb</button>
+            </div>
+            <button class="wi-calc-btn" onclick="calcHydration()">calculate 💧</button>
+          </div>
+        </div>
+        <div class="hydro-result" id="hydroResult">
+          <div class="bottle-wrap">
+            <div class="bottle" id="bottle">
+              <div class="b-fill" id="bFill"></div>
+              <div class="b-wave"></div>
+              <div class="b-pct" id="bLabel">--</div>
+            </div>
+          </div>
+          <div class="hydro-info">
+            <div class="hydro-goal-row"><span class="hg-big" id="hydroGoal">--</span><span class="hg-unit">L / day</span></div>
+            <div class="hydro-reason" id="hydroReason">enter your weight to calculate</div>
+            <div class="hydro-msg" id="hydroMsg">💧 personalised just for you</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dc stats-card">
+      <div class="card-lbl">📊 conditions</div>
+      <div class="stats-col">
+        <div class="s-pill" data-tip="Relative Humidity"><span>💧</span><b id="dHum">--%</b><small>humidity</small><div class="s-bar"><div id="humFill"></div></div></div>
+        <div class="s-pill" data-tip="Wind Speed & Direction"><span>💨</span><b id="dWind">--</b><small id="dWindDir">wind</small></div>
+        <div class="s-pill" data-tip="Atmospheric Pressure"><span>🔵</span><b id="dPres">--</b><small>hPa</small></div>
+        <div class="s-pill" data-tip="How far you can see"><span>👁️</span><b id="dVis">--</b><small>km vis</small></div>
+        <div class="s-pill" data-tip="Temp at which moisture condenses"><span>🌡️</span><b id="dDew">--°</b><small>dew point</small></div>
+      </div>
+    </div>
+    <div class="dc health-card">
+      <div class="card-lbl">🫁 health index</div>
+      <div class="health-row">
+        <div class="h-block">
+          <div class="h-ring">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" stroke-width="7" fill="none" stroke="rgba(255,255,255,.08)"/><circle id="uvArc" cx="40" cy="40" r="32" stroke-width="7" fill="none" stroke-dasharray="201" stroke-dashoffset="201" stroke-linecap="round" transform="rotate(-90 40 40)" stroke="#00ffe0"/></svg>
+            <span class="ring-num" id="uvNum">--</span>
+          </div>
+          <span class="h-lbl">UV Index</span><span class="h-cat" id="uvCat">--</span>
+        </div>
+        <div class="h-block">
+          <div class="h-ring">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" stroke-width="7" fill="none" stroke="rgba(255,255,255,.08)"/><circle id="aqiArc" cx="40" cy="40" r="32" stroke-width="7" fill="none" stroke-dasharray="201" stroke-dashoffset="201" stroke-linecap="round" transform="rotate(-90 40 40)" stroke="#00ffe0"/></svg>
+            <span class="ring-num" id="aqiNum">--</span>
+          </div>
+          <span class="h-lbl">AQI</span><span class="h-cat" id="aqiCat">--</span>
+        </div>
+        <div class="h-block">
+          <div class="pollen-big" id="pollenEmoji">🌿</div>
+          <span class="ring-num" id="pollenNum">--</span>
+          <span class="h-lbl">Pollen</span><span class="h-cat" id="pollenCat">--</span>
+        </div>
+      </div>
+    </div>
+    <div class="dc outfit-card">
+      <div class="card-lbl">👗 vibe check — </div>
+      <div class="outfit-inner">
+        <div class="outfit-section" id="outfitMain"></div>
+        <div class="outfit-section" id="outfitExtra"></div>
+      </div>
+    </div>
+    <div class="dc hourly-card">
+      <div class="card-lbl">⏱️ next 24 hours</div>
+      <div class="hourly-scroll" id="hourlyScroll"></div>
+    </div>
+    <div class="dc travel-card">
+      <div class="card-lbl">✈️ travel weather planner</div>
+      <div class="travel-search">
+        <input type="text" id="travelInput" class="s-input" placeholder="enter destination city…"/>
+        <button class="wi-calc-btn" onclick="buildTravelPlanner()">compare ✈️</button>
+      </div>
+      <div class="travel-result hidden" id="travelResult">
+        <div class="travel-compare">
+          <div class="tc-side">
+            <div class="tc-city" id="tcYourCity">--</div>
+            <div class="tc-temp" id="tcYourTemp">--</div>
+            <div class="tc-cond" id="tcYourCond">--</div>
+            <div class="tc-pills" id="tcYourPills"></div>
+          </div>
+          <div class="tc-vs">VS</div>
+          <div class="tc-side">
+            <div class="tc-city" id="tcDestCity">--</div>
+            <div class="tc-temp" id="tcDestTemp">--</div>
+            <div class="tc-cond" id="tcDestCond">--</div>
+            <div class="tc-pills" id="tcDestPills"></div>
+          </div>
+        </div>
+        <div class="travel-verdict" id="travelVerdict"></div>
+        <div class="travel-pack">
+          <div class="tp-label">🧳 what to pack</div>
+          <div class="tp-chips" id="travelPackChips"></div>
+        </div>
+        <div class="travel-bestmonth">
+          <div class="tp-label">📅 best months to visit</div>
+          <div class="tbm-chips" id="travelBestMonths"></div>
+        </div>
+      </div>
+    </div>
+    <div class="dc forecast-card">
+      <div class="card-lbl">📅 7-day forecast</div>
+      <div class="fc-grid" id="fcRows"></div>
+    </div>
+  </main>
+</section>
+
+<!-- PAGE 4: INSIGHTS -->
+<section class="page hidden" id="pg-insights">
+  <header class="dash-top">
+    <button class="back-btn" onclick="goPage('pg-dash')"><i class="fas fa-arrow-left"></i></button>
+    <div class="dash-logo">Your <span class="neon-txt">Insights</span> 🔮</div>
+    <button class="insights-btn" onclick="goPage('pg-setup')"><i class="fas fa-cloud-sun"></i> check weather</button>
+  </header>
+  <main class="insights-grid">
+    <div class="dc score-card">
+      <div class="card-lbl">💯 outdoor health score</div>
+      <div class="score-wrap">
+        <div class="score-ring">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" stroke-width="10" fill="none" stroke="rgba(255,255,255,.06)"/>
+            <circle id="scoreArc" cx="60" cy="60" r="50" stroke-width="10" fill="none"
+              stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round"
+              transform="rotate(-90 60 60)" stroke="url(#sg)"/>
+            <defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#00ffe0"/><stop offset="100%" stop-color="#ff2d78"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="score-num" id="scoreNum">--</div>
+        </div>
+        <div class="score-factors" id="scoreFactors"></div>
+      </div>
+    </div>
+    <div class="dc besttime-card">
+      <div class="card-lbl">🕐 best time to go outside today</div>
+      <div id="bestTimeInner" class="besttime-inner"></div>
+    </div>
+    <div class="dc share-card">
+      <div class="card-lbl">📤 share today's weather</div>
+      <div class="share-preview">
+        <div class="sp-top"><span id="spCity">--</span><span id="spEmoji">🌤️</span></div>
+        <div class="sp-temp" id="spTemp">--°</div>
+        <div class="sp-cond" id="spCond">--</div>
+        <div class="sp-brand">AtmoSense ⚡</div>
+      </div>
+      <div class="share-btns">
+        <button class="sh-btn" onclick="copyWeather()"><i class="fas fa-copy"></i> copy</button>
+        <button class="sh-btn wa" onclick="waWeather()"><i class="fab fa-whatsapp"></i> share</button>
+      </div>
+    </div>
+    <div class="dc summary-card">
+      <div class="card-lbl">📝 this week's weather breakdown</div>
+      <div class="summary-inner" id="summaryInner"></div>
+    </div>
+    <div class="dc facts-card">
+      <div class="card-lbl">🎲 did you know?</div>
+      <div class="fact-inner">
+        <div class="fact-cat" id="factCat">WEATHER SCIENCE</div>
+        <div class="fact-text" id="factText">loading…</div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- PAGE 5: NAVIGATION -->
+<section class="page hidden" id="pg-nav">
+  <header class="dash-top">
+    <button class="back-btn" onclick="goPage('pg-dash')"><i class="fas fa-arrow-left"></i></button>
+    <div class="dash-logo">Atmo<span class="neon-txt">Navigate</span> 🗺️</div>
+    <div class="dash-right">
+      <button class="insights-btn" onclick="goPage('pg-insights')"><i class="fas fa-chart-line"></i> insights</button>
+    </div>
+  </header>
+  <main class="nav-page-grid">
+
+    <!-- BIG MAP LEFT -->
+    <div class="nav-map-panel">
+      <iframe id="navMapFrame" class="nav-map-iframe" src="about:blank" allowfullscreen></iframe>
+      <div class="nav-map-placeholder" id="navMapPlaceholder">
+        <div class="nmp-icon">🗺️</div>
+        <div class="nmp-title">your route will appear here</div>
+        <div class="nmp-sub">enter origin &amp; destination → tap get directions</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS RIGHT -->
+    <div class="nav-controls-panel">
+
+      <div class="nav-input-card">
+        <div class="card-lbl">📍 set your route</div>
+
+        <div class="nav-field">
+          <div class="nav-field-icon nfi-a">A</div>
+          <input type="text" id="navFromInput" class="nav-input" placeholder="from — city or address"/>
+          <button class="nav-locate-btn" onclick="useCurrentLocation()" title="use my location"><i class="fas fa-crosshairs"></i></button>
+        </div>
+
+        <div class="nav-swap-row">
+          <div class="nav-line"></div>
+          <button class="nav-swap-btn" onclick="swapLocations()"><i class="fas fa-exchange-alt"></i></button>
+          <div class="nav-line"></div>
+        </div>
+
+        <div class="nav-field">
+          <div class="nav-field-icon nfi-b">B</div>
+          <input type="text" id="navToInput" class="nav-input" placeholder="to — destination city"/>
+        </div>
+
+        <div class="nav-modes">
+          <button class="nav-mode-btn active" id="mode-driving" onclick="setTravelMode('driving')"><i class="fas fa-car"></i><span>Drive</span></button>
+          <button class="nav-mode-btn" id="mode-transit" onclick="setTravelMode('transit')"><i class="fas fa-train"></i><span>Transit</span></button>
+          <button class="nav-mode-btn" id="mode-walking" onclick="setTravelMode('walking')"><i class="fas fa-walking"></i><span>Walk</span></button>
+          
+
+        <button class="nav-go-btn" onclick="getDirections()">
+          <i class="fas fa-route"></i> get directions
+        </button>
+      </div>
+
+      <div class="nav-info-card hidden" id="navInfoCard">
+        <div class="card-lbl">🌤️ weather at destination</div>
+        <div class="nws-row">
+          <span class="nws-emoji" id="navDestEmoji">🌤️</span>
+          <div class="nws-detail">
+            <span class="nws-temp" id="navDestTemp">--</span>
+            <span class="nws-cond" id="navDestCond">--</span>
+          </div>
+          <span class="nws-tip" id="navDestTip"></span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</section>
+
+<script src="script.js"></script>
+</body>
+</html>
